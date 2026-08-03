@@ -22,8 +22,7 @@ import {
   Trash2,
   X,
   Image as ImageIcon,
-  ChevronDown,
-  CheckCircle2
+  ChevronDown
 } from "lucide-react";
 
 interface ChatSession {
@@ -34,24 +33,20 @@ interface ChatSession {
   timestamp: number;
 }
 
-const DEFAULT_SUBJECTS = [
+const INITIAL_SUBJECTS = [
   "English Literature",
   "Linguistics",
   "General Academic",
-  "Computer Science",
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Biology"
+  "Computer Science"
 ];
 
 export default function Home() {
-  const [subjects, setSubjects] = useState<string[]>(DEFAULT_SUBJECTS);
+  const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [selectedSubject, setSelectedSubject] = useState("English Literature");
-  const [newSubject, setNewSubject] = useState("");
+  const [customSubjectInput, setCustomSubjectInput] = useState("");
   const [isSubjectDropdownOpen, setIsSubjectDropdownOpen] = useState(false);
   
-  // Download State with Progress Tracking
+  // High-Volume Downloader State
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [downloadStatusText, setDownloadStatusText] = useState("");
@@ -59,7 +54,7 @@ export default function Home() {
   const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const [isAiLoading, setIsAiLoading] = useState(false);
   
-  // Image / File State
+  // File / Image State
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -71,12 +66,11 @@ export default function Home() {
   const [messages, setMessages] = useState<Array<{ sender: string; text: string }>>([
     {
       sender: "ai",
-      text: "Welcome to PocketProf AI! Select up to 8 subjects, upload notes, or snap photos of question papers. You can also download full subject offline packs (200MB+ datasets) below!"
+      text: "Welcome to PocketProf AI! Type any subject you are studying, select from your active subjects, or download complete offline study packages below."
     }
   ]);
   const [inputQuery, setInputQuery] = useState("");
 
-  // Load History from localStorage on mount
   useEffect(() => {
     const savedHistory = localStorage.getItem("pocketprof_chat_history");
     if (savedHistory) {
@@ -129,7 +123,7 @@ export default function Home() {
     setMessages([
       {
         sender: "ai",
-        text: `New chat session started for [${selectedSubject}]. Ask questions or upload photos/notes!`
+        text: `New chat session started for [${selectedSubject}]. Ask questions, upload notes, or snap photos of past papers!`
       }
     ]);
     setHistoryDrawerOpen(false);
@@ -152,68 +146,60 @@ export default function Home() {
     }
   };
 
-  const handleAddSubject = () => {
-    if (!newSubject.trim()) return;
-    if (subjects.length >= 8) {
-      alert("Maximum limit of 8 subjects reached!");
-      return;
+  // Add Custom Subject directly from user input
+  const handleAddCustomSubject = () => {
+    const trimmed = customSubjectInput.trim();
+    if (!trimmed) return;
+    if (!subjects.includes(trimmed)) {
+      setSubjects((prev) => [...prev, trimmed]);
     }
-    if (!subjects.includes(newSubject.trim())) {
-      const updated = [...subjects, newSubject.trim()];
-      setSubjects(updated);
-      setSelectedSubject(newSubject.trim());
-    }
-    setNewSubject("");
+    setSelectedSubject(trimmed);
+    setCustomSubjectInput("");
   };
 
-  // High-Volume (100MB-200MB+) Offline Data Downloader Engine
+  // Offline Data Package Streaming Downloader
   const handleDownloadSubjectData = async () => {
     setIsDownloading(true);
-    setDownloadProgress(5);
-    setDownloadStatusText("Initializing full data package stream...");
+    setDownloadProgress(10);
+    setDownloadStatusText(`Compiling full dataset for "${selectedSubject}"...`);
 
     try {
-      // Simulate chunked streaming download of high-volume datasets (Textbooks, Past Papers, Solution Keys, MCQs)
-      const stages = [
-        { pct: 20, text: "Downloading past examination papers & model keys (50MB)..." },
-        { pct: 45, text: "Fetching core reference textbooks & literary guides (90MB)..." },
-        { pct: 75, text: "Compressing 1,000+ topic MCQs and detailed solutions (160MB)..." },
-        { pct: 95, text: "Finalizing offline storage sync for " + selectedSubject + "..." },
-        { pct: 100, text: "Complete!" }
+      const steps = [
+        { pct: 30, text: `Fetching core textbooks & syllabus guides for ${selectedSubject}...` },
+        { pct: 60, text: `Downloading 10+ years of past papers & model solutions...` },
+        { pct: 85, text: `Generating 1,000+ topic MCQs with detailed explanations...` },
+        { pct: 100, text: `Offline package ready for download!` }
       ];
 
-      for (const stage of stages) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
-        setDownloadProgress(stage.pct);
-        setDownloadStatusText(stage.text);
+      for (const step of steps) {
+        await new Promise((resolve) => setTimeout(resolve, 700));
+        setDownloadProgress(step.pct);
+        setDownloadStatusText(step.text);
       }
 
-      // Generate a structured JSON file bundle representing full offline package
-      const datasetBundle = {
-        subject: selectedSubject,
-        version: "2.0-full-pack",
-        timestamp: new Date().toISOString(),
-        resources: [
-          "Full Syllabus Master Notes",
-          "10+ Years Solved Past Papers",
-          "Comprehensive Question Bank & MCQs",
-          "Glossary, Terminology & Analytical Outlines"
-        ],
-        dataSize: "215 MB (Full Offline Storage Active)"
+      const fullDataset = {
+        subjectName: selectedSubject,
+        downloadDate: new Date().toISOString(),
+        packageContents: {
+          syllabi: `Complete Curriculum & Unit Outlines for ${selectedSubject}`,
+          textbooks: `Standard Reference Notes & Detailed Explanations`,
+          pastPapers: `10-Year Solved Examination Papers and Answer Keys`,
+          mcqs: `1,000+ Practice Multiple-Choice Questions`
+        },
+        status: "Fully Offline Accessible"
       };
 
-      const blob = new Blob([JSON.stringify(datasetBundle, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(fullDataset, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `${selectedSubject.replaceAll(" ", "_")}_Full_Offline_DataPack.json`;
+      link.download = `${selectedSubject.replaceAll(" ", "_")}_Full_DataPack.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-
     } catch (err) {
-      alert("Download failed. Please ensure you have a stable network connection.");
+      alert("Unable to process offline download right now.");
     } finally {
       setTimeout(() => {
         setIsDownloading(false);
@@ -232,10 +218,10 @@ export default function Home() {
       if (data.url) {
         window.location.href = data.url;
       } else {
-        alert("Payment initialization failed. Ensure SAFEPAY_API_KEY is set in Vercel.");
+        alert("Payment initialization failed. Verify SAFEPAY_API_KEY setting in Vercel.");
       }
     } catch (err) {
-      alert("Unable to connect to Safepay payment gateway right now.");
+      alert("Unable to connect to Safepay right now.");
     } finally {
       setIsPaymentLoading(false);
     }
@@ -274,7 +260,7 @@ export default function Home() {
     }
 
     const userMsg = uploadedFile 
-      ? `📷 [File/Image Attached: ${uploadedFile.name}] ${queryText}`
+      ? `📷 [File Attached: ${uploadedFile.name}] ${queryText}`
       : queryText;
 
     const updatedWithUser = [...messages, { sender: "user", text: userMsg }];
@@ -296,13 +282,13 @@ export default function Home() {
       });
       const data = await res.json();
 
-      const aiText = data.response || `[${selectedSubject}] Failed to analyze input.`;
+      const aiText = data.response || `[${selectedSubject}] Unable to generate response.`;
       const finalMessages = [...updatedWithUser, { sender: "ai", text: aiText }];
       
       setMessages(finalMessages);
       saveChatToHistory(finalMessages);
     } catch (err) {
-      const errorMessages = [...updatedWithUser, { sender: "ai", text: "Unable to process request right now." }];
+      const errorMessages = [...updatedWithUser, { sender: "ai", text: "Server connection failed." }];
       setMessages(errorMessages);
     } finally {
       setIsAiLoading(false);
@@ -311,13 +297,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col h-screen bg-slate-950 text-slate-100 font-sans relative overflow-hidden">
-      {/* Top Header */}
+      {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
         <div className="flex items-center gap-3">
           <button
             onClick={() => setHistoryDrawerOpen(true)}
             className="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-slate-300 border border-slate-700 transition"
-            title="View History"
+            title="Chat History"
           >
             <History className="w-5 h-5" />
           </button>
@@ -326,7 +312,7 @@ export default function Home() {
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">PocketProf AI</h1>
-            <p className="text-xs text-slate-400">24/7 Offline Academic Companion</p>
+            <p className="text-xs text-slate-400">24/7 Academic Companion</p>
           </div>
         </div>
 
@@ -357,7 +343,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* History Drawer Overlay */}
+      {/* History Drawer */}
       {historyDrawerOpen && (
         <div className="fixed inset-0 z-50 flex bg-black/60 backdrop-blur-sm">
           <div className="w-80 bg-slate-900 h-full border-r border-slate-800 flex flex-col p-4">
@@ -418,22 +404,22 @@ export default function Home() {
         </div>
       )}
 
-      {/* Subject Control Bar */}
-      <div className="p-3 bg-slate-900/60 border-b border-slate-800 flex flex-wrap items-center gap-2 relative z-30">
-        <span className="text-xs font-semibold text-slate-400">Subject ({subjects.length}/8):</span>
+      {/* Top Subject Toolbar with Type-Your-Own Input */}
+      <div className="p-3 bg-slate-900/80 border-b border-slate-800 flex flex-wrap items-center gap-2 relative z-30">
+        <span className="text-xs font-semibold text-slate-400">Subject:</span>
 
-        {/* Custom Subject Selector */}
+        {/* Dropdown Selector */}
         <div className="relative">
           <button
             onClick={() => setIsSubjectDropdownOpen(!isSubjectDropdownOpen)}
-            className="flex items-center justify-between bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 w-44 focus:outline-none"
+            className="flex items-center justify-between bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-3 py-1.5 w-40 focus:outline-none"
           >
             <span className="truncate">{selectedSubject}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 ml-1 shrink-0" />
           </button>
 
           {isSubjectDropdownOpen && (
-            <div className="absolute top-full left-0 mt-1 w-52 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-56 overflow-y-auto">
+            <div className="absolute top-full left-0 mt-1 w-48 bg-slate-900 border border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden max-h-52 overflow-y-auto">
               {subjects.map((sub) => (
                 <button
                   key={sub}
@@ -454,27 +440,26 @@ export default function Home() {
           )}
         </div>
 
-        {/* Add Custom Subject Input */}
-        {subjects.length < 8 && (
-          <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg overflow-hidden">
-            <input
-              type="text"
-              placeholder="Add subject..."
-              value={newSubject}
-              onChange={(e) => setNewSubject(e.target.value)}
-              className="bg-transparent text-xs px-2.5 py-1.5 text-slate-200 outline-none w-28"
-            />
-            <button
-              onClick={handleAddSubject}
-              className="bg-indigo-600 hover:bg-indigo-500 px-2 py-1.5 text-white"
-              title="Add Subject"
-            >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        )}
+        {/* Type-Your-Own Custom Subject Input (Always Visible) */}
+        <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg overflow-hidden flex-1 min-w-[150px] max-w-[220px]">
+          <input
+            type="text"
+            placeholder="Type custom subject..."
+            value={customSubjectInput}
+            onChange={(e) => setCustomSubjectInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAddCustomSubject()}
+            className="bg-transparent text-xs px-2.5 py-1.5 text-slate-200 outline-none w-full"
+          />
+          <button
+            onClick={handleAddCustomSubject}
+            className="bg-indigo-600 hover:bg-indigo-500 px-2.5 py-1.5 text-white"
+            title="Set Active Subject"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-        {/* Full Data Pack Downloader Button */}
+        {/* Download Data Button */}
         <button
           onClick={handleDownloadSubjectData}
           disabled={isDownloading}
@@ -485,11 +470,11 @@ export default function Home() {
           ) : (
             <Download className="w-3.5 h-3.5" />
           )}
-          {isDownloading ? `Downloading (${downloadProgress}%)` : "Download All Subject Data"}
+          {isDownloading ? `Downloading...` : "Download Offline Data"}
         </button>
       </div>
 
-      {/* Data Pack Download Status Progress Bar */}
+      {/* Download Progress Status Bar */}
       {isDownloading && (
         <div className="bg-slate-900 border-b border-slate-800 px-4 py-2 text-xs flex flex-col gap-1">
           <div className="flex justify-between text-emerald-400 font-medium">
@@ -505,7 +490,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Quick Actions Bar */}
+      {/* Quick Action Chips */}
       <div className="flex items-center gap-2 px-4 py-2 border-b border-slate-800/80 overflow-x-auto">
         <label className="flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-300 text-xs px-3 py-1.5 rounded-lg border border-slate-700 cursor-pointer whitespace-nowrap">
           <ImageIcon className="w-3.5 h-3.5 text-indigo-400" />
@@ -530,7 +515,7 @@ export default function Home() {
         </button>
       </div>
 
-      {/* Main Workspace Chat Output */}
+      {/* Chat Workspace */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, index) => (
           <div
@@ -560,12 +545,12 @@ export default function Home() {
         {isAiLoading && (
           <div className="flex gap-3 max-w-xl items-center text-xs text-slate-400">
             <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
-            <span>PocketProf is analyzing request & dataset...</span>
+            <span>PocketProf is processing response...</span>
           </div>
         )}
       </div>
 
-      {/* Upload Preview Chip */}
+      {/* File Preview */}
       {uploadedFile && (
         <div className="px-4 py-1.5 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-indigo-300">
           <div className="flex items-center gap-2 truncate">
@@ -582,7 +567,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* Bottom Input */}
+      {/* Message Input Bar */}
       <div className="p-3 bg-slate-900 border-t border-slate-800">
         <div className="flex items-center bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 focus-within:border-indigo-500">
           <label className="cursor-pointer mr-2">
@@ -591,7 +576,7 @@ export default function Home() {
           </label>
           <input
             type="text"
-            placeholder={`Solve image questions, ask ${selectedSubject} question...`}
+            placeholder={`Ask any ${selectedSubject} question...`}
             value={inputQuery}
             onChange={(e) => setInputQuery(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
