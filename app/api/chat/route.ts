@@ -36,8 +36,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Using active stable gemini-1.5-flash model endpoint
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,4 +67,3 @@ export async function POST(req: NextRequest) {
     );
   }
 }
-
