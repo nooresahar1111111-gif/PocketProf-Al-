@@ -1,18 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
+  let currentSubject = "General Academic";
+  
   try {
     const { prompt, subject, imageBase64, imageMimeType } = await req.json();
+    if (subject) {
+      currentSubject = subject;
+    }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { response: `[${subject}] GEMINI_API_KEY missing in Vercel environment variables.` },
+        { response: `[${currentSubject}] GEMINI_API_KEY missing in Vercel environment variables.` },
         { status: 500 }
       );
     }
 
-    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${subject || "General Academic"}. Provide accurate, clear, and comprehensive answers.`;
+    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide accurate, clear, and comprehensive answers.`;
 
     const contents: any[] = [];
 
@@ -45,7 +50,7 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       console.error("Gemini API Error details:", data);
       return NextResponse.json(
-        { response: `[${subject}] Gemini API Error: ${data.error?.message || "Failed to process request"}` },
+        { response: `[${currentSubject}] Gemini API Error: ${data.error?.message || "Failed to process request"}` },
         { status: 500 }
       );
     }
@@ -56,8 +61,9 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error("Route Error:", error);
     return NextResponse.json(
-      { response: `[${subject || "Error"}] Server issue: ${error?.message || "Internal error"}` },
+      { response: `[${currentSubject}] Server issue: ${error?.message || "Internal error"}` },
       { status: 500 }
     );
   }
 }
+
