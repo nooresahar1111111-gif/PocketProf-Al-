@@ -1,13 +1,9 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "PocketProf AI - 24/7 Academic Companion",
-  description: "Offline-first AI study assistant",
+export const metadata = {
+  title: "PocketProf AI",
+  description: "24/7 Academic Companion",
 };
 
 export default function RootLayout({
@@ -18,7 +14,9 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en">
-        <body className={inter.className}>{children}</body>
+        <body className="bg-[#070b14] text-slate-100 antialiased">
+          {children}
+        </body>
       </html>
     </ClerkProvider>
   );
