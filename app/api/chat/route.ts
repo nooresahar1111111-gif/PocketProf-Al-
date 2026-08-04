@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     // Standard model string for Google Generative AI SDK
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const systemInstruction = `You are PocketProf AI, an expert academic tutor specializing in ${
       subject || "General Academic"
