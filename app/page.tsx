@@ -126,24 +126,6 @@ export default function Home() {
     }
   };
 
-  const handleUpgrade = async () => {
-    try {
-      const res = await fetch("/api/checkout", { method: "POST" });
-      const contentType = res.headers.get("content-type");
-
-      if (!contentType || !contentType.includes("application/json")) {
-        alert("Checkout endpoint error: Server returned an HTML page. Ensure app/api/checkout/route.ts exists.");
-        return;
-      }
-
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-      else alert(data.error || "Safepay session error.");
-    } catch {
-      alert("Checkout error.");
-    }
-  };
-
   return (
     <div className="flex flex-col min-h-screen bg-[#070b14] text-slate-100 font-sans">
       <input type="file" ref={fileInputRef} accept="image/*,.pdf" onChange={handleFileUpload} className="hidden" />
@@ -158,7 +140,11 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={handleUpgrade}
+              onClick={async () => {
+                const res = await fetch("/api/checkout", { method: "POST" });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+              }}
               className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium"
             >
               ⚡ Upgrade ($2 / 500 PKR)
@@ -226,7 +212,7 @@ export default function Home() {
               disabled={isGeneratingGuide}
               className="ml-auto bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 text-xs px-3 py-1 rounded-lg"
             >
-              📥 {isGeneratingGuide ? "Generating Guide..." : "Download Study Guide"}
+              📥 {isGeneratingGuide ? "Generating..." : "Download Study Guide"}
             </button>
           </div>
 
