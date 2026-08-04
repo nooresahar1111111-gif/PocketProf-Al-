@@ -17,31 +17,25 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide thorough, accurate, and detailed explanations suitable for university and college level study.`;
+    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide thorough, accurate, and clear academic answers.`;
 
-    const contents: any[] = [];
-
+    const parts: any[] = [];
+    
     if (imageBase64 && imageMimeType) {
-      contents.push({
-        parts: [
-          { inline_data: { mime_type: imageMimeType, data: imageBase64 } },
-          { text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze this attached material."}` }
-        ]
-      });
-    } else {
-      contents.push({
-        parts: [
-          { text: `${systemInstruction}\n\nQuestion: ${prompt}` }
-        ]
-      });
+      parts.push({ inline_data: { mime_type: imageMimeType, data: imageBase64 } });
     }
+    
+    parts.push({ text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze the context."}` });
 
+    // Official Gemini 1.5 Flash Endpoint String
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contents }),
+        body: JSON.stringify({
+          contents: [{ parts }]
+        }),
       }
     );
 
@@ -50,18 +44,18 @@ export async function POST(req: NextRequest) {
     if (!response.ok) {
       console.error("Gemini API Error details:", data);
       return NextResponse.json(
-        { response: `[${currentSubject}] Gemini API Error: ${data.error?.message || "Failed to process request"}` },
+        { response: `[${currentSubject}] API Error: ${data.error?.message || "Failed to query Gemini API."}` },
         { status: 500 }
       );
     }
 
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No answer generated.";
     return NextResponse.json({ response: answer });
 
   } catch (error: any) {
     console.error("Route Error:", error);
     return NextResponse.json(
-      { response: `[${currentSubject}] Server issue: ${error?.message || "Internal error"}` },
+      { response: `[${currentSubject}] Server error: ${error?.message || "Internal error"}` },
       { status: 500 }
     );
   }
