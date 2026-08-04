@@ -14,9 +14,12 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Standard model string for Google Generative AI SDK
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const systemInstruction = `You are PocketProf AI, an expert academic tutor specializing in ${subject || "General Academic"}. Provide concise, clear, and accurate answers.`;
+    const systemInstruction = `You are PocketProf AI, an expert academic tutor specializing in ${
+      subject || "General Academic"
+    }. Provide concise, clear, accurate, and highly educational answers.`;
 
     const contents: any[] = [];
 
@@ -37,12 +40,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ response: responseText });
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-
-    if (error?.status === 429 || error?.message?.includes("Quota")) {
-      return NextResponse.json({
-        response: "⏳ Free rate limit reached. Please wait ~30 seconds and try again!",
-      });
-    }
 
     return NextResponse.json(
       { response: `⚠️ API Error: ${error?.message || "Failed to process request."}` },
