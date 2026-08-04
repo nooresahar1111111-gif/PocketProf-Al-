@@ -22,34 +22,48 @@ export async function POST(req: NextRequest) {
     const parts: any[] = [];
     
     if (imageBase64 && imageMimeType) {
-      parts.push({ inline_data: { mime_type: imageMimeType, data: imageBase64 } });
+      parts.push({
+        inline_data: { mime_type: imageMimeType, data: imageBase64 }
+      });
     }
     
-    parts.push({ text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze the context."}` });
+    parts.push({
+      text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze the provided material."}`
+    });
 
-    // Official Gemini 1.5 Flash Endpoint String
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    // We fallback through standard production endpoints: v1/models/gemini-1.5-flash
+    let response = await fetch(
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts }]
-        }),
+        body: JSON.stringify({ contents: [{ parts }] }),
       }
     );
+
+    // Secondary fallback to gemini-2.0-flash if v1 flash is unavailable
+    if (!response.ok) {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts }] }),
+        }
+      );
+    }
 
     const data = await response.json();
 
     if (!response.ok) {
       console.error("Gemini API Error details:", data);
       return NextResponse.json(
-        { response: `[${currentSubject}] API Error: ${data.error?.message || "Failed to query Gemini API."}` },
+        { response: `[${currentSubject}] API Error: ${data.error?.message || "Failed to query AI model."}` },
         { status: 500 }
       );
     }
 
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No answer generated.";
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text returned from model.";
     return NextResponse.json({ response: answer });
 
   } catch (error: any) {
