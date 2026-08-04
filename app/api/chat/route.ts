@@ -12,12 +12,12 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { response: `[${currentSubject}] GEMINI_API_KEY missing in Vercel environment variables.` },
+        { response: `[${currentSubject}] GEMINI_API_KEY is missing in Vercel settings.` },
         { status: 500 }
       );
     }
 
-    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide thorough, accurate, and clear academic answers.`;
+    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide concise, thorough, and clear academic answers.`;
 
     const parts: any[] = [];
     
@@ -28,12 +28,12 @@ export async function POST(req: NextRequest) {
     }
     
     parts.push({
-      text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze the provided material."}`
+      text: `${systemInstruction}\n\nQuestion: ${prompt || "Analyze the provided content."}`
     });
 
-    // We fallback through standard production endpoints: v1/models/gemini-1.5-flash
-    let response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+    // Use standard 1.5 flash endpoint to minimize quota consumption
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -41,35 +41,30 @@ export async function POST(req: NextRequest) {
       }
     );
 
-    // Secondary fallback to gemini-2.0-flash if v1 flash is unavailable
-    if (!response.ok) {
-      response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ contents: [{ parts }] }),
-        }
-      );
-    }
-
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Gemini API Error details:", data);
-      return NextResponse.json(
-        { response: `[${currentSubject}] API Error: ${data.error?.message || "Failed to query AI model."}` },
-        { status: 500 }
-      );
+      console.error("Gemini API Error:", data);
+
+      // Clean, human-readable error handling for UI overflow prevention
+      if (response.status === 429 || data.error?.message?.includes("Quota exceeded")) {
+        return NextResponse.json({
+          response: `⏳ Free rate limit reached. Please wait ~30 seconds and try again!`
+        });
+      }
+
+      return NextResponse.json({
+        response: `⚠️ AI Service temporarily busy (${data.error?.code || response.status}). Please try again in a moment.`
+      });
     }
 
-    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response text returned from model.";
+    const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response generated.";
     return NextResponse.json({ response: answer });
 
   } catch (error: any) {
     console.error("Route Error:", error);
     return NextResponse.json(
-      { response: `[${currentSubject}] Server error: ${error?.message || "Internal error"}` },
+      { response: `⚠️ Server connection issue. Please check your network.` },
       { status: 500 }
     );
   }
