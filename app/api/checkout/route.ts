@@ -2,50 +2,54 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.SAFEPAY_API_KEY; // Your Safepay Secret Key
+    const apiKey = process.env.SAFEPAY_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "SAFEPAY_API_KEY is not configured in Vercel environment variables." },
-        { status: 500 }
+        { error: "SAFEPAY_API_KEY is missing in Vercel environment variables." },
+        { status: 400 }
       );
     }
 
-    // Determine environment (Use 'sandbox' for testing, 'production' for live)
-    const environment = process.env.NODE_ENV === "production" ? "sandbox" : "sandbox"; 
-    
-    // Safepay Sandbox API URL
-    const baseUrl = "https://sandbox.api.getsafepay.com";
-
-    // Step 1: Create a payment tracker / session
-    const response = await fetch(`${baseUrl}/v1/payments/tracker`, {
+    // Safepay Sandbox API Call
+    const response = await fetch("https://sandbox.api.getsafepay.com/v1/payments/tracker", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-SFPY-API-KEY": apiKey,
       },
       body: JSON.stringify({
-        client: "sec_...", // Safepay Secret or Merchant Key
-        amount: 50000, // Amount in lowest currency subunit (500.00 PKR = 50000 paisa)
+        client: apiKey,
+        amount: 50000, // 500.00 PKR (represented in paisa)
         currency: "PKR",
-        environment: "sandbox", // <--- THIS PREVENTS THE "Required environment is missing" ERROR
+        environment: "sandbox",
       }),
     });
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Safepay creation error:", data);
-      return NextResponse.json({ error: data.message || "Failed to create payment session" }, { status: 400 });
+      return NextResponse.json(
+        { error: data.message || "Failed to initialize Safepay session." },
+        { status: response.status }
+      );
     }
 
-    // Extract checkout token/URL
     const token = data.data?.token || data.token;
+    if (!token) {
+      return NextResponse.json(
+        { error: "No session token returned from Safepay." },
+        { status: 500 }
+      );
+    }
+
     const checkoutUrl = `https://sandbox.api.getsafepay.com/checkout/pay?beacon=${token}&env=sandbox`;
 
     return NextResponse.json({ url: checkoutUrl });
   } catch (error: any) {
-    console.error("Checkout route error:", error);
-    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error?.message || "Server error processing payment session." },
+      { status: 500 }
+    );
   }
 }
