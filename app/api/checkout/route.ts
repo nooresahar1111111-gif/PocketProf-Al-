@@ -1,28 +1,51 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
-    const apiKey = process.env.SAFEPAY_API_KEY;
+    const apiKey = process.env.SAFEPAY_API_KEY; // Your Safepay Secret Key
+
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "SAFEPAY_API_KEY is not configured in Vercel environment variables." },
+        { status: 500 }
+      );
+    }
+
+    // Determine environment (Use 'sandbox' for testing, 'production' for live)
+    const environment = process.env.NODE_ENV === "production" ? "sandbox" : "sandbox"; 
     
-    const response = await fetch("https://sandbox.api.getsafepay.com/order/v1/init", {
+    // Safepay Sandbox API URL
+    const baseUrl = "https://sandbox.api.getsafepay.com";
+
+    // Step 1: Create a payment tracker / session
+    const response = await fetch(`${baseUrl}/v1/payments/tracker`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "X-SFPY-API-KEY": apiKey,
       },
       body: JSON.stringify({
-        client: apiKey,
-        amount: 50000, // 500 PKR in paisas
+        client: "sec_...", // Safepay Secret or Merchant Key
+        amount: 50000, // Amount in lowest currency subunit (500.00 PKR = 50000 paisa)
         currency: "PKR",
-        environment: "sandbox",
+        environment: "sandbox", // <--- THIS PREVENTS THE "Required environment is missing" ERROR
       }),
     });
 
     const data = await response.json();
-    const tracker = data?.data?.token;
-    const checkoutUrl = `https://sandbox.api.getsafepay.com/checkout/pay?tracker=${tracker}`;
+
+    if (!response.ok) {
+      console.error("Safepay creation error:", data);
+      return NextResponse.json({ error: data.message || "Failed to create payment session" }, { status: 400 });
+    }
+
+    // Extract checkout token/URL
+    const token = data.data?.token || data.token;
+    const checkoutUrl = `https://sandbox.api.getsafepay.com/checkout/pay?beacon=${token}&env=sandbox`;
 
     return NextResponse.json({ url: checkoutUrl });
-  } catch (error) {
-    return NextResponse.json({ error: "Failed to initialize Safepay checkout" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Checkout route error:", error);
+    return NextResponse.json({ error: error.message || "Internal server error" }, { status: 500 });
   }
 }
