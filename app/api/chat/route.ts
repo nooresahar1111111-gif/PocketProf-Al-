@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide accurate, clear, and comprehensive answers.`;
+    const systemInstruction = `You are PocketProf AI, an expert academic tutor for ${currentSubject}. Provide thorough, accurate, and detailed explanations suitable for university and college level study.`;
 
     const contents: any[] = [];
 
@@ -36,9 +36,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Using active stable gemini-1.5-flash model endpoint
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
