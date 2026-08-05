@@ -1,48 +1,55 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, subject, imageBase64, imageMimeType } = await req.json();
-    const apiKey = process.env.GEMINI_API_KEY;
+    const { prompt, subject } = await req.json();
+    const apiKey = process.env.GROQ_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { response: "⚠️ GEMINI_API_KEY is missing in your environment variables." },
+        { response: "⚠️ GROQ_API_KEY is missing in your Vercel Environment Variables." },
         { status: 500 }
       );
     }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Standard model string for Google Generative AI SDK
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const systemInstruction = `You are PocketProf AI, an expert academic tutor specializing in ${
       subject || "General Academic"
     }. Provide concise, clear, accurate, and highly educational answers.`;
 
-    const contents: any[] = [];
+    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          { role: "system", content: systemInstruction },
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 1500,
+      }),
+    });
 
-    if (imageBase64 && imageMimeType) {
-      contents.push({
-        inlineData: {
-          data: imageBase64,
-          mimeType: imageMimeType,
-        },
-      });
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("Groq API Error:", data.error);
+      return NextResponse.json(
+        { response: `⚠️ Groq API Error: ${data.error.message}` },
+        { status: 500 }
+      );
     }
 
-    contents.push(`${systemInstruction}\n\nUser Question: ${prompt}`);
-
-    const result = await model.generateContent(contents);
-    const responseText = result.response.text();
-
+    const responseText = data.choices?.[0]?.message?.content || "No response generated.";
     return NextResponse.json({ response: responseText });
-  } catch (error: any) {
-    console.error("Gemini API Error:", error);
 
+  } catch (error: any) {
+    console.error("Server Error:", error);
     return NextResponse.json(
-      { response: `⚠️ API Error: ${error?.message || "Failed to process request."}` },
+      { response: `⚠️ Server Error: ${error?.message || "Failed to process request."}` },
       { status: 500 }
     );
   }
