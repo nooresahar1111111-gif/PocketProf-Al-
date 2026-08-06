@@ -14,7 +14,12 @@ export async function POST(req: NextRequest) {
 
     const systemInstruction = `You are PocketProf AI, an expert academic tutor specializing in ${
       subject || "General Academic"
-    }. Provide concise, clear, accurate, and highly educational answers.`;
+    }.
+
+FORMATTING RULES:
+- Always format outputs using structured Markdown.
+- Put every question heading, MCQ choice (A, B, C, D), correct answer, and explanation on its OWN separate line.
+- Use double line breaks between distinct questions to keep text clear and easy to read.`;
 
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
@@ -28,7 +33,7 @@ export async function POST(req: NextRequest) {
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt },
         ],
-        temperature: 0.7,
+        temperature: 0.6,
         max_tokens: 1500,
       }),
     });
