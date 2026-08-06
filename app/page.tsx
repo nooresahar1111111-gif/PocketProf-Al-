@@ -140,17 +140,16 @@ export default function Home() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={async () => {
-                const res = await fetch("/api/checkout", { method: "POST" });
-                const data = await res.json();
-                if (data.url) window.location.href = data.url;
-              }}
-              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium"
+              onClick={() =>
+                alert(
+                  "🎉 PocketProf Pro ($2 / 500 PKR):\n\n• Unlimited AI questions & answers\n• Instant Study Guide downloads\n• Exam & paper analyzer\n\nComing soon!"
+                )
+              }
+              className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
             >
               ⚡ Upgrade ($2 / 500 PKR)
             </button>
 
-            {/* Official Clerk Authentication */}
             <SignedOut>
               <SignInButton mode="modal">
                 <button className="bg-slate-800 hover:bg-slate-700 text-xs px-3 py-1.5 rounded-lg border border-slate-700">
@@ -237,7 +236,7 @@ export default function Home() {
           {messages.map((m) => (
             <div
               key={m.id}
-              className={`p-3 rounded-xl text-xs max-w-[85%] break-words ${
+              className={`p-3.5 rounded-xl text-xs max-w-[90%] whitespace-pre-wrap leading-relaxed ${
                 m.sender === "user" ? "bg-indigo-600 text-white ml-auto" : "bg-[#111827] border border-slate-800 text-slate-200"
               }`}
             >
