@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { SignInButton, SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import ReactMarkdown from "react-markdown";
 
 interface Message {
   id: string;
@@ -379,13 +380,30 @@ export default function Home() {
             {messages.map((m) => (
               <div
                 key={m.id}
-                className={`p-3.5 rounded-xl text-xs max-w-[90%] whitespace-pre-wrap leading-relaxed ${
+                className={`p-3.5 rounded-xl text-xs max-w-[90%] leading-relaxed ${
                   m.sender === "user"
                     ? "bg-indigo-600 text-white ml-auto"
                     : "bg-[#111827] border border-slate-800 text-slate-200"
                 }`}
               >
-                {m.text}
+                {m.sender === "user" ? (
+                  m.text
+                ) : (
+                  <ReactMarkdown
+                    components={{
+                      h1: ({ node, ...props }) => <h1 className="font-bold text-base my-2 text-indigo-300" {...props} />,
+                      h2: ({ node, ...props }) => <h2 className="font-bold text-sm my-1.5 text-indigo-300" {...props} />,
+                      h3: ({ node, ...props }) => <h3 className="font-bold text-xs my-1 text-indigo-300" {...props} />,
+                      p: ({ node, ...props }) => <p className="mb-2 last:mb-0" {...props} />,
+                      ul: ({ node, ...props }) => <ul className="list-disc pl-4 my-1 space-y-1" {...props} />,
+                      ol: ({ node, ...props }) => <ol className="list-decimal pl-4 my-1 space-y-1" {...props} />,
+                      li: ({ node, ...props }) => <li className="my-0.5" {...props} />,
+                      strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
+                    }}
+                  >
+                    {m.text}
+                  </ReactMarkdown>
+                )}
               </div>
             ))}
             {isLoading && <div className="text-xs text-slate-500">PocketProf is thinking...</div>}
