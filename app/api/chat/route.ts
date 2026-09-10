@@ -29,7 +29,7 @@ FORMATTING RULES:
     // Construct request messages
     let userContent: any = prompt;
 
-    // If an image/paper is uploaded, pass it in multi-modal format (for models supporting vision)
+    // If an image/paper is uploaded, pass it in multi-modal format
     if (imageBase64) {
       userContent = [
         { type: "text", text: prompt || "Please analyze this uploaded paper/notes:" },
@@ -42,6 +42,11 @@ FORMATTING RULES:
       ];
     }
 
+    // Selected model routing to prevent model missing errors
+    const selectedModel = imageBase64 
+      ? "llama-3.2-11b-vision-preview" 
+      : "llama-3.3-70b-specdec";
+
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -49,7 +54,7 @@ FORMATTING RULES:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: imageBase64 ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile",
+        model: selectedModel,
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: userContent },
