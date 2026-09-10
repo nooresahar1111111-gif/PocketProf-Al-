@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
       subject || "General Academic Studies"
     }. Provide clear step-by-step explanations formatted cleanly in Markdown.`;
 
-    // Production stable model string
+    // Active production model ID on Groq Cloud
     const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-20b",
         messages: [
           { role: "system", content: systemInstruction },
           { role: "user", content: prompt || "Hello!" },
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     if (!response.ok || data.error) {
       console.error("Groq Raw Error:", data.error);
       return NextResponse.json(
-        { response: `⚠️ Groq Error: ${data.error?.message || "Model access failed."}` },
+        { response: `⚠️ Groq Error: ${data.error?.message || "Model request failed."}` },
         { status: response.status || 500 }
       );
     }
