@@ -26,10 +26,10 @@ FORMATTING RULES:
 - Put every question heading, MCQ choice (A, B, C, D), correct answer, and explanation on its OWN separate line.
 - Use double line breaks between distinct questions to keep text clear and easy to read.`;
 
-    // Active Groq production endpoints
+    // Official active Groq endpoints
     const selectedModel = imageBase64
-      ? "llama-3.2-11b-vision-preview"
-      : "llama-3.1-8b-instant";
+      ? "qwen/qwen3.6-27b"
+      : "llama-3.3-70b-versatile";
 
     let userContent: any;
 
