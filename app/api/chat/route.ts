@@ -26,9 +26,9 @@ FORMATTING RULES:
 - Put every question heading, MCQ choice (A, B, C, D), correct answer, and explanation on its OWN separate line.
 - Use double line breaks between distinct questions to keep text clear and easy to read.`;
 
-    // Official active Groq endpoints
+    // Active production models on Groq
     const selectedModel = imageBase64
-      ? "qwen/qwen3.6-27b"
+      ? "llama-3.2-11b-vision-preview"
       : "llama-3.3-70b-versatile";
 
     let userContent: any;
@@ -67,9 +67,9 @@ FORMATTING RULES:
     const data = await response.json();
 
     if (!response.ok || data.error) {
-      console.error("Groq API Error:", data.error);
+      console.error("Groq API Error Details:", data.error);
       return NextResponse.json(
-        { response: `⚠️ Groq API Error: ${data.error?.message || "Failed to fetch response."}` },
+        { response: `⚠️ Groq API Error: ${data.error?.message || "Model access failed."}` },
         { status: response.status || 500 }
       );
     }
